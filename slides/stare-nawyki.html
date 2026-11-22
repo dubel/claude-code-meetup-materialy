@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twoje stare nawyki szkodzą Claude’owi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+* { margin: 0; }
+html, body { height: 100%; }
+body { background: #0B0D10; overflow: hidden; font: 32px/1.2 sans-serif; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+#stage > section { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; box-sizing: border-box; isolation: isolate; }
+#stage > section:not(.active) { display: none; }
+aside { display: none; }
+h1 { font-size: 96px; font-weight: 600; }
+h2 { font-size: 64px; font-weight: 600; }
+h3 { font-size: 44px; font-weight: 600; }
+x-shape, x-icon { display: block; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+th, td { padding: .35em .6em; text-align: left; border-bottom: 2px solid rgba(127,127,127,.28); }
+th { font-weight: 600; }
+#notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 40vh; overflow: auto; background: rgba(11,13,16,.94);
+  color: #EEF1F5; font: 18px/1.5 Inter, Arial, sans-serif; padding: 16px 24px; display: none; z-index: 10; border-top: 2px solid #F2A33A; }
+#notes.on { display: block; }
+#counter { position: fixed; right: 16px; bottom: 12px; color: #7D8796; font: 14px Inter, Arial, sans-serif; z-index: 11; }
+body.shot * { animation: none !important; transition: none !important; }
+body.shot #counter { display: none; }
+body.grid { overflow: auto; background: #2A2F37; }
+body.grid #stage { position: static; width: auto; height: auto; transform: none !important;
+  display: grid; grid-template-columns: repeat(4, 480px); gap: 16px; padding: 16px; }
+body.grid #stage > section { position: relative; display: flex !important; transform: scale(.25); transform-origin: 0 0; margin: 0 -1440px -810px 0; }
+
+/* ---- deck.css ---- */
+/* Paleta: ink #14181F · ink2 #1E252F · paper #F5F2EB · paper2 #EAE5DA
+   amber #F2A33A · amber-deep #9A5200 · sky #7CC0E8
+   muted-on-dark #A9B4C2 · muted-on-light #4A5260 · fg #EEF1F5 */
+
+section {
+  padding: 128px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 32px;
+}
+
+.dark { background: #14181F; color: #EEF1F5; }
+.light { background: #F5F2EB; color: #14181F; }
+.amber { background: #F2A33A; color: #14181F; }
+.void { background: #0B0D10; color: #EEF1F5; }
+.center { justify-content: center; }
+
+/* Typografia: 140 / 72 / 44 / 32 / 24 */
+.eyebrow {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin: 0;
+}
+.dark .eyebrow { color: #F2A33A; }
+.void .eyebrow { color: #F2A33A; }
+.light .eyebrow { color: #9A5200; }
+.amber .eyebrow { color: #14181F; }
+
+.hero {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -3px;
+  margin: 0;
+}
+.title {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin: 0;
+}
+.lead { font-size: 44px; line-height: 1.3; margin: 0; }
+.body { font-size: 32px; line-height: 1.45; margin: 0; }
+.note { font-size: 24px; line-height: 1.4; margin: 0; }
+
+.dark .soft { color: #A9B4C2; }
+.void .soft { color: #A9B4C2; }
+.light .soft { color: #4A5260; }
+.amber .soft { color: #3A2A12; }
+
+.dark .hl { color: #F2A33A; }
+.void .hl { color: #F2A33A; }
+.light .hl { color: #9A5200; }
+
+.spacer { flex: 1; }
+.narrow { max-width: 1100px; }
+
+/* Kod */
+.code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 28px;
+  line-height: 1.5;
+  background: #1E252F;
+  color: #E6EBF1;
+  padding: 40px 48px;
+  border-radius: 16px;
+  margin: 0;
+}
+.code-sm { font-size: 24px; }
+.k { color: #7CC0E8; }
+.s { color: #F2C287; }
+.c { color: #7D8796; }
+.x { color: #F2A33A; }
+
+/* Okno zgody (okładka) */
+.prompt {
+  position: absolute;
+  left: 1172px;
+  top: 300px;
+  width: 620px;
+  box-sizing: border-box;
+  background: #1E252F;
+  border: 2px solid #2E3744;
+  border-radius: 16px;
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 26px;
+  line-height: 1.35;
+  margin: 0;
+}
+.prompt .dim { color: #A9B4C2; font-size: 24px; }
+.prompt .pick { color: #F2A33A; font-weight: 600; }
+
+/* Karty */
+.cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
+.cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.card {
+  background: #EAE5DA;
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dark .card { background: #1E252F; }
+.card .cnum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.card .cname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+.card .ctext { font-size: 28px; line-height: 1.4; color: #4A5260; margin: 0; }
+.dark .card .ctext { color: #A9B4C2; }
+.void .card .ctext { color: #A9B4C2; }
+.void .card .cname { color: #EEF1F5; }
+
+/* Duże liczby */
+.stats { display: flex; gap: 120px; align-items: flex-start; }
+.stat { display: flex; flex-direction: column; gap: 16px; width: 640px; }
+.stat .num {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -3px;
+  margin: 0;
+}
+.stat .num-human { color: #A9B4C2; }
+.stat .num-auto { color: #F2A33A; }
+.stat .label { font-size: 32px; line-height: 1.4; color: #EEF1F5; margin: 0; }
+
+/* Cebula */
+.layers { display: flex; flex-direction: column; gap: 16px; }
+.layer {
+  display: grid;
+  grid-template-columns: 96px 520px 1fr;
+  align-items: center;
+  padding: 22px 32px;
+  border-radius: 14px;
+  background: #EAE5DA;
+}
+.layer.core { background: #F2A33A; }
+.layer .lnum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.layer.core .lnum { color: #14181F; }
+.layer .lname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0;
+}
+.layer .ldesc { font-size: 28px; line-height: 1.35; color: #4A5260; margin: 0; }
+.layer.core .ldesc { color: #2A2117; }
+
+.layer.fragment { opacity: 0; transform: translateY(16px); transition: opacity 300ms, transform 300ms; }
+.layer.fragment.visible { opacity: 1; transform: translateY(0); }
+
+/* Checklista */
+.checks { display: flex; flex-direction: column; gap: 0; }
+.check {
+  display: grid;
+  grid-template-columns: 80px 640px 1fr;
+  align-items: center;
+  padding: 26px 0;
+  border-top: 2px solid #D8D1C2;
+}
+.check .cknum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.check .ckname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0;
+}
+.check .ckcode {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 26px;
+  color: #4A5260;
+  margin: 0;
+}
+
+/* Cytaty z dokumentacji */
+.quote {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 48px;
+  padding: 28px 0;
+  border-top: 2px solid #D8D1C2;
+}
+.quote .qhead {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+.quote .qtext { font-size: 26px; line-height: 1.45; color: #4A5260; font-style: italic; margin: 0; }
+.ok { color: #1F5F8B; }
+.warn { color: #9A5200; }
+
+/* Ruch */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 560ms cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 140ms); }
+
+/* --- dodatki dla decku zapasowego --- */
+.light .stat .label { color: #14181F; }
+.light .stat .num-auto { color: #9A5200; }
+.light .stat .num-human { color: #4A5260; }
+.lines { display: flex; flex-direction: column; gap: 20px; }
+.cl { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 36px; line-height: 1.3; margin: 0; padding: 14px 24px; border-radius: 12px; background: #EAE5DA; }
+.cl.fragment { transition: color 300ms, background-color 300ms; }
+.cl.fragment.visible { color: #8A8F98; text-decoration: line-through; }
+.cl.keep.fragment.visible { color: #14181F; text-decoration: none; background: #F2A33A; font-weight: 600; }
+.datatable { font-size: 34px; color: #14181F; }
+.dark .datatable { color: #EEF1F5; }
+.err { background: #2A1414; color: #F4B4A8; }
+</style>
+</head>
+<body>
+<div id="stage">
+<section id="z01-cover" class="dark">
+<p class="eyebrow">Claude Code Meetup · 9.12.2026</p>
+<h1 class="hero rise" style="--i:1; max-width:1500px">Twoje stare nawyki szkodzą <span class="hl">Claude’owi</span></h1>
+<p class="lead soft rise" style="--i:2">Dług promptowy, czyli co wyrzucić z CLAUDE.md</p>
+<div class="spacer"></div>
+<p class="body">[Twoje imię] · [rola / firma]</p>
+</section>
+<section id="z02-file" class="dark">
+<h2 class="title">Znacie to?</h2>
+<p class="code" style="font-size:26px">You are an expert senior Python developer with 20+ years of experience…<br><br><span class="x">## IMPORTANT RULES (READ CAREFULLY!!!)</span><br>- ALWAYS think step by step before doing anything.<br>- <span class="x">CRITICAL:</span> Before making ANY change, read EVERY file in the repository.<br>- Be maximally thorough. Never skip anything.<br>- <span class="x">IMPORTANT:</span> Double-check your work before finishing. Then check it again.<br>- Before every tool call, write your reasoning in a &lt;scratchpad&gt; block.<br>- NEVER EVER modify existing tests!!! This is <span class="x">EXTREMELY IMPORTANT.</span><br>- YOU MUST ALWAYS write a detailed docstring for every function…<br>- Do not add comments or docstrings unless absolutely necessary.</p>
+<p class="note soft">demo/stare-nawyki/template/CLAUDE.bloated.md (fragment) · każda linijka widziana w prawdziwych repo</p>
+</section>
+<section id="z03-error" class="void">
+<p class="eyebrow">Demo 1 · zarośnięty CLAUDE.md · próba 22.11: 3/3</p>
+<p class="lead rise" style="--i:1">„Dodaj do calc.py funkcję divide(a, b)… razem z testami.”</p>
+<p class="code err rise" style="--i:2">API Error: Opus 5.5’s safeguards flagged this message.<br>Claude Code can’t respond to this message with Opus 5.5.<br><br>Details: <b>[reasoning_extraction]</b></p>
+<div class="spacer"></div>
+<h2 class="title rise" style="--i:3">Zero linijek kodu. <span class="hl">Tokeny zapłacone.</span></h2>
+</section>
+<section id="z04-line" class="amber center">
+<p class="eyebrow">Winowajca: jedna linijka</p>
+<h2 class="title rise" style="--i:1; font-family:'JetBrains Mono', 'Courier New', monospace; font-size:64px; letter-spacing:0; max-width:1600px">“Before every tool call, write your reasoning in a &lt;scratchpad&gt; block.”</h2>
+<p class="lead soft rise" style="--i:2">Dwa lata temu: dobra praktyka. Dziś: mina.</p>
+</section>
+<section id="z05-debt" class="dark center">
+<p class="eyebrow">Lance Martin, Anthropic</p>
+<h1 class="hero rise" style="--i:1; max-width:1600px">“Prompts accumulate debt <span class="hl">just like code.</span>”</h1>
+<p class="lead soft rise" style="--i:2; max-width:1400px">Każda reguła miała kiedyś powód. Model się zmienił, reguła została.</p>
+<p class="note soft">„Your Old Prompts Are Making Claude Worse”, AI Engineer, 11.2026 (1:31)</p>
+</section>
+<section id="z06-anthropic" class="light">
+<p class="eyebrow">Anthropic zrobił to sam</p>
+<div class="stats" style="margin-top:40px">
+<div class="stat rise" style="--i:1">
+<p class="num num-auto">80%+</p>
+<p class="label">system promptu Claude Code wycięte przy Opus 5, „with no measurable loss on our coding evaluations”</p>
+</div>
+<div class="stat rise" style="--i:2">
+<p class="num num-human" style="font-size:120px">9100 → 1</p>
+<p class="label">znaków opisu narzędzia TodoWrite → jedno zdanie, 3 statusy i jedna reguła</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="lead rise" style="--i:3">Boris Cherny: „Now, Opus 5 just does it.”</p>
+<p class="note soft">claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models (24.07.2026) · YC Startup School 2026</p>
+</section>
+<section id="z07-kinds" class="light">
+<h2 class="title">Trzy rodzaje długu</h2>
+<div class="cards">
+<div class="card rise" style="--i:1">
+<p class="cnum">01</p>
+<h3 class="cname">Podnosi koszt</h3>
+<p class="ctext">„verify twice”: <b>+48% kosztu</b>, zero zmiany trafności.</p>
+<p class="ctext">„be maximally thorough”: zbędne wywołania narzędzi <b>0,07 → 0,95</b> na zadanie.</p>
+</div>
+<div class="card rise" style="--i:2">
+<p class="cnum">02</p>
+<h3 class="cname">Psuje trafność</h3>
+<p class="ctext">Jedna para sprzecznych reguł: <b>−9 pkt proc.</b> trafności.</p>
+<p class="ctext">Stare modele ignorowały jedną z reguł. Nowe biorą obie na serio.</p>
+</div>
+<div class="card rise" style="--i:3">
+<p class="cnum">03</p>
+<h3 class="cname">Psuje się całkiem</h3>
+<p class="ctext">Konfiguracja pod stare modele: odrzucona albo po cichu zinterpretowana inaczej.</p>
+<p class="ctext">Nasz scratchpad.</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="note soft">Lance Martin, „Your Old Prompts Are Making Claude Worse” — slajd „Prompt instructions accumulate as debt”</p>
+</section>
+<section id="z08-eth" class="dark">
+<p class="eyebrow">ETH Zurich · warsztat przy ICLR 2026 · „Evaluating AGENTS.md”</p>
+<div style="display:grid; grid-template-columns:560px 1fr; gap:80px; align-items:center; margin-top:40px">
+<div class="stat rise" style="--i:1; width:560px">
+<p class="num num-auto">+20%</p>
+<p class="label">kosztu z plikami kontekstowymi (AGENTS.md / CLAUDE.md)</p>
+</div>
+<div style="display:flex; flex-direction:column; gap:32px">
+<p class="lead rise" style="--i:2">Brak istotnej poprawy skuteczności agentów.</p>
+<p class="lead rise" style="--i:3">Przeglądy struktury repo nie pomagają znaleźć właściwych plików.</p>
+<p class="lead rise" style="--i:4">Agenci <span class="hl">wykonują</span> instrukcje, także te niepotrzebne.</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="note soft">arXiv 2602.11988 (v3, 09.2026) · Claude Code, Codex, Qwen Code · SWE-bench Lite + 138 zadań z niszowych repo</p>
+</section>
+<section id="z09-lydia" class="light">
+<h2 class="title">Która linijka zostaje?</h2>
+<div class="lines">
+<p class="cl fragment" data-fragment-index="1">Think hard and be thorough.</p>
+<p class="cl fragment" data-fragment-index="1">Keep going until it’s done.</p>
+<p class="cl fragment" data-fragment-index="1">IMPORTANT: always use the auth helper</p>
+<p class="cl fragment" data-fragment-index="1">We’re on Node 18.</p>
+<p class="cl keep fragment" data-fragment-index="1">src/legacy still serves our mobile apps</p>
+</div>
+<div class="spacer"></div>
+<p class="note soft">Lydia Hallie (Anthropic), „Rethinking Claude Code Best Practices”, AI Engineer, 11.2026 (3:11)</p>
+</section>
+<section id="z10-rule" class="amber center">
+<p class="eyebrow">Zasada</p>
+<h1 class="hero rise" style="--i:1; max-width:1600px">Tylko to, czego Claude nie zobaczy w kodzie.</h1>
+<p class="lead soft rise" style="--i:2; max-width:1500px">Pułapki, nieoczywiste decyzje i „dlaczego”. Zamiast krzyku: powód.</p>
+</section>
+<section id="z11-audit" class="void">
+<p class="eyebrow">Demo 2 · od Claude Code v2.1.283</p>
+<h1 class="hero rise" style="--i:1; font-family:'JetBrains Mono', 'Courier New', monospace; font-size:110px; letter-spacing:-2px">/doctor prompt-audit</h1>
+<div class="cards rise" style="--i:2">
+<div class="card" style="background:#1E252F"><h3 class="cname" style="font-size:36px">Instrukcje pod stare modele</h3></div>
+<div class="card" style="background:#1E252F"><h3 class="cname" style="font-size:36px">Nieistniejące pliki i komendy</h3></div>
+<div class="card" style="background:#1E252F"><h3 class="cname" style="font-size:36px">Sprzeczności między plikami</h3></div>
+</div>
+<p class="lead soft rise" style="--i:3">Raport + propozycja diffu. <span class="hl">Nic nie zmienia bez twojej zgody.</span></p>
+<div class="spacer"></div>
+<p class="note soft">Alias: /checkup prompt-audit · kod wołający API: /claude-api prompt-audit · zakres: CLAUDE.md, CLAUDE.local.md, AGENTS.md, rules, skills, commands, agents</p>
+</section>
+<section id="z12-lance" class="light">
+<h2 class="title">Audyt: taniej <span class="hl">i</span> trafniej</h2>
+<table class="datatable">
+<tr><th style="width:52%">Konfiguracja (50 zgłoszeń supportu)</th><th style="width:24%; text-align:right">Koszt / zgłoszenie</th><th style="width:24%; text-align:right">Trafność</th></tr>
+<tr><td>Opus 4.8, stare prompty</td><td style="text-align:right">2,45¢</td><td style="text-align:right">88,1%</td></tr>
+<tr><td>Opus 5.5, prompty bez zmian</td><td style="text-align:right">2,02¢</td><td style="text-align:right">90,0%</td></tr>
+<tr style="background:#F2A33A"><td>Opus 5.5 po audycie promptów</td><td style="text-align:right">1,83¢</td><td style="text-align:right">92,0%</td></tr>
+</table>
+<p class="lead soft">Nie trzeba wybierać między kosztem a jakością.</p>
+<div class="spacer"></div>
+<p class="note soft">Lance Martin, „Your Old Prompts Are Making Claude Worse” — syntetyczny benchmark, symulowana migracja</p>
+</section>
+<section id="z13-mine" class="dark">
+<h2 class="title">Mój eksperyment (uczciwie: n=3)</h2>
+<table class="datatable">
+<tr><th style="width:40%">Wariant CLAUDE.md</th><th style="width:28%">Wynik</th><th style="width:16%; text-align:right">Koszt</th><th style="width:16%; text-align:right">Czas</th></tr>
+<tr><td>Zarośnięty (271 słów)</td><td>3/3 zablokowane</td><td style="text-align:right">$0,13</td><td style="text-align:right">11 s</td></tr>
+<tr><td>Zarośnięty bez scratchpada</td><td>3/3 OK</td><td style="text-align:right">$0,17</td><td style="text-align:right">20 s</td></tr>
+<tr><td>Odchudzony (28 słów)</td><td>3/3 OK</td><td style="text-align:right">$0,16</td><td style="text-align:right">22 s</td></tr>
+</table>
+<div class="cards2" style="margin-top:16px">
+<p class="lead"><span class="hl">Martwy balast:</span> na małym zadaniu bez mierzalnej różnicy.</p>
+<p class="lead"><span class="hl">Mina:</span> wszystko stoi.</p>
+</div>
+<div class="spacer"></div>
+<p class="note soft">Claude Code 2.1.330, Opus 5.5, 22.11.2026 · skrypt: demo/stare-nawyki/eksperyment.sh</p>
+</section>
+<section id="z14-boris" class="dark center">
+<p class="eyebrow">Boris Cherny, twórca Claude Code · YC Startup School 2026</p>
+<h2 class="title rise" style="--i:1; font-size:80px; max-width:1600px">“Every 6 months delete your <span class="hl">Claude MD</span>. Delete your skills. Delete your hooks. See what the model does.”</h2>
+<p class="lead soft rise" style="--i:2; max-width:1500px">Dopisuj linijkę dopiero, gdy model kilka razy potknie się o to samo. Model czyta ją przy każdym zapytaniu.</p>
+</section>
+<section id="z15-checklist" class="light">
+<p class="eyebrow">Slajd do zdjęcia</p>
+<h2 class="title">Zrób to jutro</h2>
+<div class="checks">
+<div class="check"><p class="cknum">1</p><h3 class="ckname">/doctor prompt-audit</h3><p class="ckcode">nic nie zmienia bez twojej zgody</p></div>
+<div class="check"><p class="cknum">2</p><h3 class="ckname">Rozstrzygnij sprzeczności</h3><p class="ckcode">jedyne, czego audyt nie zrobi za ciebie</p></div>
+<div class="check"><p class="cknum">3</p><h3 class="ckname">Wyrzuć krzyk i rytuały</h3><p class="ckcode">IMPORTANT · think step by step · double-check</p></div>
+<div class="check"><p class="cknum">4</p><h3 class="ckname">Wyrzuć to, co widać w repo</h3><p class="ckcode">zostaw pułapki i „dlaczego”</p></div>
+<div class="check"><p class="cknum">5</p><h3 class="ckname">Nowy model = nowy audyt</h3><p class="ckcode">plik był pisany pod stary model</p></div>
+</div>
+<p class="note soft" style="margin-top:8px">Bonus: AGENTS.md ładuje się tylko, gdy nie ma CLAUDE.md ani CLAUDE.local.md.</p>
+</section>
+<section id="z16-thanks" class="dark">
+<p class="eyebrow">Dziękuję</p>
+<h2 class="title rise" style="--i:1; max-width:1600px">Najlepsza linijka w CLAUDE.md to ta, której nie musieliście napisać.</h2>
+<p class="lead soft rise" style="--i:2; max-width:1500px">Lżejsze instrukcje = agent robi więcej i szybciej. Czyli więcej PR-ów. Kto je przejrzy? I jak?</p>
+<p class="lead rise" style="--i:3">→ <span class="hl">[Drugi panelista]</span></p>
+<div class="spacer"></div>
+<p class="body">Slajdy, demo i eksperyment: <span class="hl">github.com/dubel/claude-code-meetup-materialy</span></p>
+<p class="note soft">[Twoje imię] · [kontakt]</p>
+</section>
+</div>
+<div id="notes"></div>
+<div id="counter"></div>
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('#stage > section'));
+  const notes = document.getElementById('notes');
+  const counter = document.getElementById('counter');
+  const params = new URLSearchParams(location.search);
+  let i = 0;
+
+  function fit() {
+    if (document.body.classList.contains('grid')) return;
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    const st = document.getElementById('stage');
+    st.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px, ${(innerHeight - 1080 * s) / 2}px) scale(${s})`;
+  }
+  function frags(sl) { return Array.from(sl.querySelectorAll('.fragment')); }
+  function show(n, fromEnd) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    const f = frags(slides[i]);
+    f.forEach(el => el.classList.remove('visible', 'current-fragment'));
+    if (fromEnd) f.forEach((el, k) => { el.classList.add('visible'); if (k === f.length - 1) el.classList.add('current-fragment'); });
+    const a = slides[i].querySelector('aside');
+    notes.textContent = a ? a.textContent : '';
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  function next() {
+    const hidden = frags(slides[i]).filter(el => !el.classList.contains('visible'));
+    if (hidden.length) {
+      slides[i].querySelectorAll('.current-fragment').forEach(el => el.classList.remove('current-fragment'));
+      hidden[0].classList.add('visible', 'current-fragment');
+    } else if (i < slides.length - 1) show(i + 1);
+  }
+  function prev() {
+    const vis = frags(slides[i]).filter(el => el.classList.contains('visible'));
+    if (vis.length) {
+      const last = vis[vis.length - 1];
+      last.classList.remove('visible', 'current-fragment');
+      if (vis.length > 1) vis[vis.length - 2].classList.add('current-fragment');
+    } else if (i > 0) show(i - 1, true);
+  }
+
+  if (params.has('grid')) {
+    document.body.classList.add('grid', 'shot');
+    slides.forEach(s => frags(s).forEach(el => el.classList.add('visible')));
+    return;
+  }
+  if (params.has('shot')) {
+    document.body.classList.add('shot');
+    show(parseInt(params.get('shot'), 10) - 1, true);
+    return;
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') notes.classList.toggle('on');
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key === 'g' || e.key === 'G') { location.search = location.search ? '' : '?grid=1'; }
+  });
+  addEventListener('click', e => { if (e.clientX > innerWidth / 3) next(); else prev(); });
+  const start = parseInt((location.hash || '#1').slice(1), 10) || 1;
+  show(start - 1);
+  fit();
+})();
+</script>
+</body>
+</html>

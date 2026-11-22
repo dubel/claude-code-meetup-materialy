@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Przestań klikać Yes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&amp;display=swap">
+<style>
+* { margin: 0; }
+html, body { height: 100%; }
+body { background: #0B0D10; overflow: hidden; font: 32px/1.2 sans-serif; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+#stage > section { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; box-sizing: border-box; isolation: isolate; }
+#stage > section:not(.active) { display: none; }
+aside { display: none; }
+h1 { font-size: 96px; font-weight: 600; }
+h2 { font-size: 64px; font-weight: 600; }
+h3 { font-size: 44px; font-weight: 600; }
+x-shape, x-icon { display: block; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+th, td { padding: .35em .6em; text-align: left; border-bottom: 2px solid rgba(127,127,127,.28); }
+th { font-weight: 600; }
+#notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 40vh; overflow: auto; background: rgba(11,13,16,.94);
+  color: #EEF1F5; font: 18px/1.5 Inter, Arial, sans-serif; padding: 16px 24px; display: none; z-index: 10; border-top: 2px solid #F2A33A; }
+#notes.on { display: block; }
+#counter { position: fixed; right: 16px; bottom: 12px; color: #7D8796; font: 14px Inter, Arial, sans-serif; z-index: 11; }
+body.shot * { animation: none !important; transition: none !important; }
+body.shot #counter { display: none; }
+body.grid { overflow: auto; background: #2A2F37; }
+body.grid #stage { position: static; width: auto; height: auto; transform: none !important;
+  display: grid; grid-template-columns: repeat(4, 480px); gap: 16px; padding: 16px; }
+body.grid #stage > section { position: relative; display: flex !important; transform: scale(.25); transform-origin: 0 0; margin: 0 -1440px -810px 0; }
+
+/* ---- deck.css ---- */
+/* Paleta: ink #14181F · ink2 #1E252F · paper #F5F2EB · paper2 #EAE5DA
+   amber #F2A33A · amber-deep #9A5200 · sky #7CC0E8
+   muted-on-dark #A9B4C2 · muted-on-light #4A5260 · fg #EEF1F5 */
+
+section {
+  padding: 128px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-size: 32px;
+}
+
+.dark { background: #14181F; color: #EEF1F5; }
+.light { background: #F5F2EB; color: #14181F; }
+.amber { background: #F2A33A; color: #14181F; }
+.void { background: #0B0D10; color: #EEF1F5; }
+.center { justify-content: center; }
+
+/* Typografia: 140 / 72 / 44 / 32 / 24 */
+.eyebrow {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin: 0;
+}
+.dark .eyebrow { color: #F2A33A; }
+.void .eyebrow { color: #F2A33A; }
+.light .eyebrow { color: #9A5200; }
+.amber .eyebrow { color: #14181F; }
+
+.hero {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -3px;
+  margin: 0;
+}
+.title {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin: 0;
+}
+.lead { font-size: 44px; line-height: 1.3; margin: 0; }
+.body { font-size: 32px; line-height: 1.45; margin: 0; }
+.note { font-size: 24px; line-height: 1.4; margin: 0; }
+
+.dark .soft { color: #A9B4C2; }
+.void .soft { color: #A9B4C2; }
+.light .soft { color: #4A5260; }
+.amber .soft { color: #3A2A12; }
+
+.dark .hl { color: #F2A33A; }
+.void .hl { color: #F2A33A; }
+.light .hl { color: #9A5200; }
+
+.spacer { flex: 1; }
+.narrow { max-width: 1100px; }
+
+/* Kod */
+.code {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 28px;
+  line-height: 1.5;
+  background: #1E252F;
+  color: #E6EBF1;
+  padding: 40px 48px;
+  border-radius: 16px;
+  margin: 0;
+}
+.code-sm { font-size: 24px; }
+.k { color: #7CC0E8; }
+.s { color: #F2C287; }
+.c { color: #7D8796; }
+.x { color: #F2A33A; }
+
+/* Okno zgody (okładka) */
+.prompt {
+  position: absolute;
+  left: 1172px;
+  top: 300px;
+  width: 620px;
+  box-sizing: border-box;
+  background: #1E252F;
+  border: 2px solid #2E3744;
+  border-radius: 16px;
+  padding: 36px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 26px;
+  line-height: 1.35;
+  margin: 0;
+}
+.prompt .dim { color: #A9B4C2; font-size: 24px; }
+.prompt .pick { color: #F2A33A; font-weight: 600; }
+
+/* Karty */
+.cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
+.cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.card {
+  background: #EAE5DA;
+  border-radius: 16px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dark .card { background: #1E252F; }
+.card .cnum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.card .cname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin: 0;
+}
+.card .ctext { font-size: 28px; line-height: 1.4; color: #4A5260; margin: 0; }
+.dark .card .ctext { color: #A9B4C2; }
+.void .card .ctext { color: #A9B4C2; }
+.void .card .cname { color: #EEF1F5; }
+
+/* Duże liczby */
+.stats { display: flex; gap: 120px; align-items: flex-start; }
+.stat { display: flex; flex-direction: column; gap: 16px; width: 640px; }
+.stat .num {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -3px;
+  margin: 0;
+}
+.stat .num-human { color: #A9B4C2; }
+.stat .num-auto { color: #F2A33A; }
+.stat .label { font-size: 32px; line-height: 1.4; color: #EEF1F5; margin: 0; }
+
+/* Cebula */
+.layers { display: flex; flex-direction: column; gap: 16px; }
+.layer {
+  display: grid;
+  grid-template-columns: 96px 520px 1fr;
+  align-items: center;
+  padding: 22px 32px;
+  border-radius: 14px;
+  background: #EAE5DA;
+}
+.layer.core { background: #F2A33A; }
+.layer .lnum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.layer.core .lnum { color: #14181F; }
+.layer .lname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0;
+}
+.layer .ldesc { font-size: 28px; line-height: 1.35; color: #4A5260; margin: 0; }
+.layer.core .ldesc { color: #2A2117; }
+
+.layer.fragment { opacity: 0; transform: translateY(16px); transition: opacity 300ms, transform 300ms; }
+.layer.fragment.visible { opacity: 1; transform: translateY(0); }
+
+/* Checklista */
+.checks { display: flex; flex-direction: column; gap: 0; }
+.check {
+  display: grid;
+  grid-template-columns: 80px 640px 1fr;
+  align-items: center;
+  padding: 26px 0;
+  border-top: 2px solid #D8D1C2;
+}
+.check .cknum {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 32px;
+  font-weight: 600;
+  color: #9A5200;
+  margin: 0;
+}
+.check .ckname {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 600;
+  margin: 0;
+}
+.check .ckcode {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 26px;
+  color: #4A5260;
+  margin: 0;
+}
+
+/* Cytaty z dokumentacji */
+.quote {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 48px;
+  padding: 28px 0;
+  border-top: 2px solid #D8D1C2;
+}
+.quote .qhead {
+  font-family: 'Space Grotesk', Arial, sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+.quote .qtext { font-size: 26px; line-height: 1.45; color: #4A5260; font-style: italic; margin: 0; }
+.ok { color: #1F5F8B; }
+.warn { color: #9A5200; }
+
+/* Ruch */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 560ms cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i, 0) * 140ms); }
+</style>
+</head>
+<body>
+<div id="stage">
+<section id="s01-cover" class="dark">
+<p class="eyebrow">Claude Code Meetup · 9.12.2026</p>
+<h1 class="hero rise" style="--i:1">Przestań<br>klikać <span class="hl">Yes</span></h1>
+<p class="lead soft narrow rise" style="--i:2; max-width:960px">Jak pozwolić Claude Code pracować godzinami i dalej spać spokojnie</p>
+<div class="spacer"></div>
+<p class="body">[Twoje imię] · [rola / firma]</p>
+<div class="prompt rise" style="--i:3">
+<p class="mono dim">Bash command</p>
+<p class="mono">rm -rf ./build</p>
+<p class="mono" style="margin-top:12px; font-weight:600">Do you want to proceed?</p>
+<p class="mono pick">&gt; 1. Yes</p>
+<p class="mono">&#160;&#160;2. Yes, and don’t ask again</p>
+<p class="mono">&#160;&#160;3. No</p>
+</div>
+</section>
+<section id="s02-why" class="light">
+<p class="eyebrow">Dlaczego teraz · 1/3</p>
+<h2 class="title rise" style="--i:1; max-width:1500px">Od 14 sierpnia auto mode jest trybem domyślnym</h2>
+<p class="lead soft rise" style="--i:2; max-width:1400px">Na Pro, Max i Team, a od v2.1.283 praktycznie u wszystkich. Claude nie pyta o każdą komendę. Decyduje klasyfikator.</p>
+<div class="spacer"></div>
+<p class="note soft">Źródło: claude.com/blog/auto-mode-default-in-claude-code · code.claude.com/docs/en/permission-modes</p>
+</section>
+<section id="s02a-secrets" class="dark">
+<p class="eyebrow">Dlaczego teraz · 2/3</p>
+<p class="hero hl rise" style="--i:1; font-size:200px">1122</p>
+<p class="lead rise" style="--i:2; max-width:1500px">sekrety w regułach „don’t ask again” w plikach <span class="hl">.claude/settings.local.json</span> na publicznym GitHubie</p>
+<p class="body soft rise" style="--i:3; max-width:1400px">Hasła produkcyjne, klucze do chmury, tokeny npm. Skanery jak gitleaks wielu nie złapały, bo siedziały w środku komend. Poprawka: v2.1.323.</p>
+<div class="spacer"></div>
+<p class="note soft">Apiiro (przez InfoQ, 22.11.2026) · Hacker News, 629 pkt, 7.11.2026</p>
+</section>
+<section id="s02b-email" class="dark">
+<p class="eyebrow">Dlaczego teraz · 3/3</p>
+<h2 class="title rise" style="--i:1">Claude wysyła twój e-mail</h2>
+<p class="code rise" style="--i:2">curl -A <span class="s">"research-bot (<span class="x">jan.kowalski@example.com</span>)"</span> \<br>&#160;&#160;https://data.sec.gov/api/…</p>
+<p class="body soft rise" style="--i:3; max-width:1500px">E-mail trafił do kontekstu, żeby Claude nie zmyślał autorów w nagłówkach plików. Przy API, które proszą o kontakt, Claude „pomocnie” wpisywał go w User-Agent.</p>
+<div class="spacer"></div>
+<p class="lead rise" style="--i:4">Agent zrobił coś sensownego. <span class="hl">Nikt nie postawił płotu.</span></p>
+<p class="note soft">Hacker News, 1616 pkt, 5.11.2026 · github.com/anthropics/claude-code/issues/107757 (przykład ilustracyjny)</p>
+</section>
+<section id="s03-strategies" class="light">
+<p class="eyebrow">Jak sobie dziś radzimy</p>
+<h2 class="title">Trzy złe strategie</h2>
+<div class="cards">
+<div class="card rise" style="--i:1">
+<p class="cnum">01</p>
+<h3 class="cname">Klikanie Yes</h3>
+<p class="ctext">Pierwsze pięć próśb czytasz. Przy pięćdziesiątej już tylko klikasz.</p>
+</div>
+<div class="card rise" style="--i:2">
+<p class="cnum">02</p>
+<h3 class="cname">YOLO</h3>
+<p class="ctext" style="font-family:'JetBrains Mono', 'Courier New', monospace; font-size:24px; color:#9A5200">--dangerously-skip-<br>permissions</p>
+<p class="ctext">Działa świetnie do pierwszego rm -rf w złym katalogu.</p>
+</div>
+<div class="card rise" style="--i:3">
+<p class="cnum">03</p>
+<h3 class="cname">Niańczenie</h3>
+<p class="ctext">Bezpieczne, ale agent jest dokładnie tak szybki jak twoja uwaga.</p>
+</div>
+</div>
+</section>
+<section id="s03a-stats" class="dark">
+<p class="eyebrow">Badanie Anthropic · 1053 groźne komendy</p>
+<div class="stats">
+<div class="stat rise" style="--i:1">
+<p class="num num-human">13,6%</p>
+<p class="label">groźnych komend złapali ludzie klikający „Yes”</p>
+</div>
+<div class="stat rise" style="--i:2">
+<p class="num num-auto">89%</p>
+<p class="label">tych samych komend zablokował auto mode</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="lead rise" style="--i:3">Zabezpieczenie, którego nikt nie czyta, to <span class="hl">teatr</span>.</p>
+<p class="note soft">Źródło: claude.com/blog/auto-mode-default-in-claude-code (7.08.2026): 143/1053 vs 937/1053</p>
+</section>
+<section id="s04-onion" class="light">
+<h2 class="title">Model cebuli: pięć warstw</h2>
+<div class="layers">
+<div class="layer fragment">
+<p class="lnum">1</p>
+<h3 class="lname">Reguły deny / ask</h3>
+<p class="ldesc">Deterministyczne. Ale Bash(rm *) nie złapie /bin/rm.</p>
+</div>
+<div class="layer fragment">
+<p class="lnum">2</p>
+<h3 class="lname">Auto mode</h3>
+<p class="ldesc">Klasyfikator blokuje curl | bash, force push, deploy.</p>
+</div>
+<div class="layer core fragment">
+<p class="lnum">3</p>
+<h3 class="lname">Hooki PreToolUse</h3>
+<p class="ldesc">Twoja polityka w kodzie. Claude czyta powód odmowy.</p>
+</div>
+<div class="layer fragment">
+<p class="lnum">4</p>
+<h3 class="lname">Sandbox</h3>
+<p class="ldesc">Izolacja OS: zapis tylko w projekcie, sieć z allowlisty.</p>
+</div>
+<div class="layer fragment">
+<p class="lnum">5</p>
+<h3 class="lname">Człowiek</h3>
+<p class="ldesc">W przemyślanym miejscu: git push, gh pr create.</p>
+</div>
+</div>
+</section>
+<section id="s05-rule" class="amber center">
+<p class="eyebrow">Test Lydii Hallie: czy da się to cofnąć?</p>
+<h1 class="hero rise" style="--i:1; max-width:1500px">Twarde reguły tylko dla rzeczy nieodwracalnych.</h1>
+<p class="lead soft rise" style="--i:2; max-width:1400px">Edycja pliku, testy, refaktor: niech agent działa. Kasowanie, push, sekrety, produkcja: jawna reguła.</p>
+</section>
+<section id="s06-demo" class="void center">
+<p class="eyebrow">Na żywo</p>
+<h1 class="hero rise" style="--i:1; font-size:200px">Demo</h1>
+<p class="code rise" style="--i:2; background:#14181F">~/meetup-demo <span class="x">$</span> claude --permission-mode auto</p>
+<div class="cards rise" style="--i:3; grid-template-columns:1fr 1fr 1fr 1fr; gap:24px">
+<p class="body soft"><span class="hl">1</span> · rm → kosz</p>
+<p class="body soft"><span class="hl">2</span> · testy przed commitem</p>
+<p class="body soft"><span class="hl">3</span> · sekrety</p>
+<p class="body soft"><span class="hl">4</span> · git push</p>
+</div>
+</section>
+<section id="s06a-config" class="dark">
+<h2 class="title">Cała konfiguracja</h2>
+<div style="display:grid; grid-template-columns:1120px 1fr; gap:48px; align-items:center">
+<p class="code code-sm">{<br>&#160;&#160;<span class="k">"permissions"</span>: {<br>&#160;&#160;&#160;&#160;<span class="k">"deny"</span>: [<span class="s">"Read(./.env)"</span>, <span class="s">"Bash(git push --force *)"</span>],<br>&#160;&#160;&#160;&#160;<span class="k">"ask"</span>:&#160;&#160;[<span class="s">"Bash(git push *)"</span>, <span class="s">"Bash(gh pr create *)"</span>]<br>&#160;&#160;},<br>&#160;&#160;<span class="k">"hooks"</span>: {<br>&#160;&#160;&#160;&#160;<span class="k">"PreToolUse"</span>: [{<br>&#160;&#160;&#160;&#160;&#160;&#160;<span class="k">"matcher"</span>: <span class="s">"Bash"</span>,<br>&#160;&#160;&#160;&#160;&#160;&#160;<span class="k">"hooks"</span>: [{ <span class="k">"type"</span>: <span class="s">"command"</span>,<br>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="k">"command"</span>: <span class="s">".claude/hooks/guard-bash.sh"</span>,<br>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<span class="x">"onFailure": "block"</span> }]<br>&#160;&#160;&#160;&#160;}]<br>&#160;&#160;}<br>}</p>
+<div style="display:flex; flex-direction:column; gap:40px">
+<div><p class="lead hl">deny</p><p class="body soft">nigdy, bez pytania</p></div>
+<div><p class="lead hl">ask</p><p class="body soft">tu chcę człowieka</p></div>
+<div><p class="lead hl">hooks</p><p class="body soft">moja polityka w kodzie</p></div>
+</div>
+</div>
+</section>
+<section id="s06b-hook" class="dark">
+<h2 class="title">Hook: odmowa z powodem</h2>
+<p class="code code-sm"><span class="c"># .claude/hooks/guard-bash.sh (fragment, uproszczony)</span><br>deny() {<br>&#160;&#160;jq -n --arg r <span class="s">"$1"</span> <span class="s">'{hookSpecificOutput: {hookEventName: "PreToolUse",</span><br><span class="s">&#160;&#160;&#160;&#160;permissionDecision: "deny", permissionDecisionReason: $r}}'</span><br>&#160;&#160;exit 0<br>}<br><br><span class="k">if</span> grep -Eq <span class="s">'(^|[[:space:];&amp;|])git[[:space:]]+commit'</span> &lt;&lt;&lt;<span class="s">"$cmd"</span>; <span class="k">then</span><br>&#160;&#160;python3 -m unittest -q || <span class="x">deny "Commit zablokowany: testy nie przechodzą."</span><br><span class="k">fi</span></p>
+<p class="note soft">Co widzi Claude:</p>
+<p class="code code-sm" style="background:#2A1E10; color:#F2C287; padding:28px 48px">PreToolUse:Bash hook error: POLITYKA testy: commit zablokowany — testy nie przechodzą…</p>
+</section>
+<section id="s07-law" class="dark center">
+<h1 class="hero soft rise" style="--i:0">CLAUDE.md to rada.</h1>
+<h1 class="hero hl rise" style="--i:3">Hook to prawo.</h1>
+<p class="lead soft rise" style="--i:5; max-width:1400px">Claude uruchomił testy, zobaczył czerwony test i mimo to próbował zrobić commit.</p>
+</section>
+<section id="s08-limits" class="light">
+<h2 class="title">Uczciwie: czego to nie załatwia</h2>
+<div class="cards2">
+<div class="card rise" style="--i:1">
+<h3 class="cname">Hook to nie sejf</h3>
+<p class="ctext">Regex zawsze da się obejść. Twarda izolacja to sandbox, kontener albo VM.</p>
+</div>
+<div class="card rise" style="--i:2">
+<h3 class="cname">Sekrety poza projektem</h3>
+<p class="ctext">op run, menedżer sekretów, zmienne w runtime. Hook to druga linia obrony.</p>
+</div>
+<div class="card rise" style="--i:3">
+<h3 class="cname">Fałszywe alarmy kosztują</h3>
+<p class="ctext">Za ostre reguły i agent marnuje tury na obchodzenie płotów.</p>
+</div>
+<div class="card rise" style="--i:4">
+<h3 class="cname">Uprawnienia to nie review</h3>
+<p class="ctext">Agent może przejść przez wszystkie hooki i dalej zrobić to źle.</p>
+</div>
+</div>
+</section>
+<section id="s09-checklist" class="light">
+<p class="eyebrow">Slajd do zdjęcia</p>
+<h2 class="title">Zrób to jutro (kwadrans)</h2>
+<div class="checks">
+<div class="check">
+<p class="cknum">1</p>
+<h3 class="ckname">deny dla nieodwracalnych</h3>
+<p class="ckcode">Bash(git push --force *) · Read(./.env)</p>
+</div>
+<div class="check">
+<p class="cknum">2</p>
+<h3 class="ckname">ask dla punktów kontrolnych</h3>
+<p class="ckcode">Bash(git push *) · Bash(gh pr create *)</p>
+</div>
+<div class="check">
+<p class="cknum">3</p>
+<h3 class="ckname">Jeden hook PreToolUse</h3>
+<p class="ckcode">"onFailure": "block"</p>
+</div>
+<div class="check">
+<p class="cknum">4</p>
+<h3 class="ckname">Sandbox</h3>
+<p class="ckcode">/sandbox</p>
+</div>
+<div class="check">
+<p class="cknum">5</p>
+<h3 class="ckname">Zaufane środowisko</h3>
+<p class="ckcode">/auto-mode-setup</p>
+</div>
+</div>
+</section>
+<section id="s10-anonymous" class="dark center">
+<p class="eyebrow">Claude Code Anonymous</p>
+<h1 class="hero rise" style="--i:1; max-width:1600px">Byłem <span class="hl">___</span>,<br>kiedy Claude Code <span class="hl">___</span>.</h1>
+<p class="lead soft rise" style="--i:2">Jedno zdanie. Bez oceniania. Kto pierwszy?</p>
+</section>
+<section id="s11-black" class="void" data-transition="fade">
+</section>
+<section id="s12-codemode" class="void">
+<p class="eyebrow">One more thing</p>
+<h1 class="hero rise" style="--i:1">Code Mode</h1>
+<p class="lead soft rise" style="--i:2; max-width:1500px">Claude pisze JavaScript, który sam wywołuje narzędzia: równolegle, łańcuchem, nawet do 2 h w tle.</p>
+<div class="cards2 rise" style="--i:3">
+<div class="card" style="background:#1E252F">
+<h3 class="cname" style="font-size:36px">Dotąd</h3>
+<p class="ctext">narzędzie → wynik → kontekst → narzędzie → wynik → kontekst…</p>
+</div>
+<div class="card" style="background:#1E252F; border:2px solid #F2A33A">
+<h3 class="cname hl" style="font-size:36px">Code Mode</h3>
+<p class="ctext">jeden skrypt; do kontekstu wraca tylko to, czego Claude potrzebuje</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="note soft">Eksperymentalny · v2.1.323+ · tylko terminal · CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1</p>
+</section>
+<section id="s12a-docs" class="light">
+<h2 class="title">Co mówi dokumentacja</h2>
+<div>
+<div class="quote">
+<p class="qhead ok">Hooki działają przy każdym wywołaniu</p>
+<p class="qtext">“Each tool call in the code goes through your deny and ask permission rules and PreToolUse hooks under the tool’s usual name.”</p>
+</div>
+<div class="quote">
+<p class="qhead warn">Klasyfikator widzi kod, nie wartości</p>
+<p class="qtext">“the classifier reviews each piece of code before it runs, not each tool call. It doesn’t see values computed at run time … so keep rules or hooks for calls you must control.”</p>
+</div>
+<div class="quote">
+<p class="qhead warn">JavaScript działa poza sandboxem</p>
+<p class="qtext">“The JavaScript itself and its file, web, and MCP tool calls run outside the sandbox.”</p>
+</div>
+</div>
+<div class="spacer"></div>
+<p class="note soft">code.claude.com/docs/en/code-mode</p>
+</section>
+<section id="s13-autonomy" class="amber center">
+<h1 class="hero rise" style="--i:1; max-width:1500px">Im więcej autonomii, tym ważniejsze hooki.</h1>
+</section>
+<section id="s14-thanks" class="dark">
+<p class="eyebrow">Dziękuję</p>
+<h2 class="title rise" style="--i:1; max-width:1500px">Agent może pracować całą noc, jeśli wiesz, gdzie postawić płot.</h2>
+<p class="lead soft rise" style="--i:2; max-width:1500px">Rano czeka 40 commitów i PR na 3000 linii. Kto to przejrzy? I jak?</p>
+<p class="lead rise" style="--i:3">→ <span class="hl">[Drugi panelista]</span></p>
+<div class="spacer"></div>
+<p class="body">Slajdy, demo i hooki: <span class="hl">github.com/dubel/claude-code-meetup-materialy</span></p>
+<p class="note soft">[Twoje imię] · [kontakt]</p>
+</section>
+</div>
+<div id="notes"></div>
+<div id="counter"></div>
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('#stage > section'));
+  const notes = document.getElementById('notes');
+  const counter = document.getElementById('counter');
+  const params = new URLSearchParams(location.search);
+  let i = 0;
+
+  function fit() {
+    if (document.body.classList.contains('grid')) return;
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    const st = document.getElementById('stage');
+    st.style.transform = `translate(${(innerWidth - 1920 * s) / 2}px, ${(innerHeight - 1080 * s) / 2}px) scale(${s})`;
+  }
+  function frags(sl) { return Array.from(sl.querySelectorAll('.fragment')); }
+  function show(n, fromEnd) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    const f = frags(slides[i]);
+    f.forEach(el => el.classList.remove('visible', 'current-fragment'));
+    if (fromEnd) f.forEach((el, k) => { el.classList.add('visible'); if (k === f.length - 1) el.classList.add('current-fragment'); });
+    const a = slides[i].querySelector('aside');
+    notes.textContent = a ? a.textContent : '';
+    counter.textContent = (i + 1) + ' / ' + slides.length;
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  function next() {
+    const hidden = frags(slides[i]).filter(el => !el.classList.contains('visible'));
+    if (hidden.length) {
+      slides[i].querySelectorAll('.current-fragment').forEach(el => el.classList.remove('current-fragment'));
+      hidden[0].classList.add('visible', 'current-fragment');
+    } else if (i < slides.length - 1) show(i + 1);
+  }
+  function prev() {
+    const vis = frags(slides[i]).filter(el => el.classList.contains('visible'));
+    if (vis.length) {
+      const last = vis[vis.length - 1];
+      last.classList.remove('visible', 'current-fragment');
+      if (vis.length > 1) vis[vis.length - 2].classList.add('current-fragment');
+    } else if (i > 0) show(i - 1, true);
+  }
+
+  if (params.has('grid')) {
+    document.body.classList.add('grid', 'shot');
+    slides.forEach(s => frags(s).forEach(el => el.classList.add('visible')));
+    return;
+  }
+  if (params.has('shot')) {
+    document.body.classList.add('shot');
+    show(parseInt(params.get('shot'), 10) - 1, true);
+    return;
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') notes.classList.toggle('on');
+    else if (e.key === 'f' || e.key === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+    else if (e.key === 'g' || e.key === 'G') { location.search = location.search ? '' : '?grid=1'; }
+  });
+  addEventListener('click', e => { if (e.clientX > innerWidth / 3) next(); else prev(); });
+  const start = parseInt((location.hash || '#1').slice(1), 10) || 1;
+  show(start - 1);
+  fit();
+})();
+</script>
+</body>
+</html>
