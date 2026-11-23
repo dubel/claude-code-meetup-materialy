@@ -11,6 +11,8 @@ Slajdy i dema z wystąpienia na inauguracyjnym meetupie Claude Code.
 - „Przestań klikać Yes”: https://dubel.dev/claude-code-meetup-materialy/slides/przestan-klikac-yes.html
 - „Twoje stare nawyki szkodzą Claude'owi”: https://dubel.dev/claude-code-meetup-materialy/slides/stare-nawyki.html
 
+Opis wystąpienia „Przestań klikać Yes” i bio prelegenta (PL/EN): [`OPIS_I_BIO.md`](OPIS_I_BIO.md)
+
 Możesz też pobrać plik `.html` (albo sklonować repo) i otworzyć go lokalnie.
 - `→` / spacja przełączają slajdy, `F` włącza pełny ekran, `G` pokazuje siatkę wszystkich slajdów.
 - Plik działa offline; bez internetu zamiast fontów z Google Fonts pokażą się zapasowe.
