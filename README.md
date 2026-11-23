@@ -7,7 +7,11 @@ Slajdy i dema z wystąpienia na inauguracyjnym meetupie Claude Code.
 | 1 | **„Przestań klikać Yes”**: bezpieczna autonomia Claude Code (auto mode, reguły `deny`/`ask`, hooki `PreToolUse`, sandbox, Code Mode) | [`slides/przestan-klikac-yes.html`](slides/przestan-klikac-yes.html) | [`demo/hooki/`](demo/hooki/) |
 | 2 | **„Twoje stare nawyki szkodzą Claude'owi”**: dług promptowy i `/doctor prompt-audit` | [`slides/stare-nawyki.html`](slides/stare-nawyki.html) | [`demo/stare-nawyki/`](demo/stare-nawyki/) |
 
-**Slajdy:** pobierz plik `.html` (albo sklonuj repo) i otwórz w przeglądarce.
+**Slajdy online:**
+- „Przestań klikać Yes”: https://dubel.dev/claude-code-meetup-materialy/slides/przestan-klikac-yes.html
+- „Twoje stare nawyki szkodzą Claude'owi”: https://dubel.dev/claude-code-meetup-materialy/slides/stare-nawyki.html
+
+Możesz też pobrać plik `.html` (albo sklonować repo) i otworzyć go lokalnie.
 - `→` / spacja przełączają slajdy, `F` włącza pełny ekran, `G` pokazuje siatkę wszystkich slajdów.
 - Plik działa offline; bez internetu zamiast fontów z Google Fonts pokażą się zapasowe.
 
