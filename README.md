@@ -96,3 +96,7 @@ Wynik `/doctor prompt-audit` z próby: [`przykladowy-audyt.md`](demo/stare-nawyk
 - Anthropic, „The new rules of context engineering for Claude 5 generation models”: https://claude.dev/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models/
 - Boris Cherny, „We Cut 80% of Claude Code's Prompt” (YC): https://www.youtube.com/watch?v=qyPCVqFUyDo
 - ETH Zurich, „Evaluating AGENTS.md” (warsztat przy ICLR 2026): https://arxiv.org/abs/2602.11988
+
+## Licencje grafik
+
+- Zdjęcie Steve'a Jobsa na slajdzie „One more thing…”: Matthew Yohe, [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Steve_Jobs_Headshot_2010-CROP_(cropped_2).jpg). Zmodyfikowane: dorysowane pikselowe okulary i cygaro.
